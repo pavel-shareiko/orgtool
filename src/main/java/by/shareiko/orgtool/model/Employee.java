@@ -9,16 +9,16 @@ import java.util.Date;
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
 public class Employee {
-    @XmlAttribute
+    @XmlElement
     private String firstName;
 
-    @XmlAttribute
+    @XmlElement
     private String middleName;
 
-    @XmlAttribute
+    @XmlElement
     private String lastName;
 
-    @XmlAttribute
+    @XmlElement
     @XmlSchemaType(name = "date")
     private Date birthDate;
 }

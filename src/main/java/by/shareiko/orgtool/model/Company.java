@@ -4,23 +4,21 @@ import lombok.Data;
 
 import javax.xml.bind.annotation.*;
 import java.util.Date;
-import java.util.List;
 
 @Data
-@XmlRootElement
+@XmlRootElement(name = "company")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class Company {
-    @XmlAttribute
+    @XmlElement
     private String name;
 
-    @XmlAttribute
+    @XmlElement
     @XmlSchemaType(name = "date")
     private Date creationDate;
 
-    @XmlAttribute
+    @XmlElement
     private CompanyStatus status;
 
-    @XmlElementWrapper(name = "employees")
-    @XmlElement(name = "employee")
-    private List<Employee> employees;
+    @XmlElement(name = "employees")
+    private Employees employees;
 }
