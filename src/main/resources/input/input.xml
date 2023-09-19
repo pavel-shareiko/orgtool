@@ -1,0 +1,42 @@
+<root>
+    <company id="1">
+        <name>Company 1</name>
+        <creationDate>2022-01-01</creationDate>
+        <status>OPEN</status>
+        <employee-ref>1</employee-ref>
+        <employee-ref>2</employee-ref>
+        <employee-ref>3</employee-ref>
+    </company>
+    <company id="1">
+        <name>Company 2</name>
+        <creationDate>2022-01-01</creationDate>
+        <status>OPEN</status>
+        <employee-ref>2</employee-ref>
+    </company>
+    <company id="1">
+        <name>Company 3</name>
+        <creationDate>2022-01-01</creationDate>
+        <status>CLOSED</status>
+        <employee-ref>1</employee-ref>
+        <employee-ref>3</employee-ref>
+    </company>
+
+    <employee id="1">
+        <firstName>Иван</firstName>
+        <middleName>Иванович</middleName>
+        <lastName>Иванов</lastName>
+        <birthDate>2002-02-02</birthDate>
+    </employee>
+    <employee id="2">
+        <firstName>Петр</firstName>
+        <middleName>Петрович</middleName>
+        <lastName>Петров</lastName>
+        <birthDate>2002-02-02</birthDate>
+    </employee>
+    <employee id="3">
+        <firstName>Иван</firstName>
+        <middleName>Викторович</middleName>
+        <lastName>Сидоров</lastName>
+        <birthDate>2002-02-02</birthDate>
+    </employee>
+</root>
