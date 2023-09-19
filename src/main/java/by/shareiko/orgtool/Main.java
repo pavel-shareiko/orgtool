@@ -2,7 +2,7 @@ package by.shareiko.orgtool;
 
 import by.shareiko.orgtool.data.access.DataAccessor;
 import by.shareiko.orgtool.data.access.XmlDataAccessor;
-import by.shareiko.orgtool.data.config.DataAccessConfig;
+import by.shareiko.orgtool.data.config.ApplicationConfig;
 import by.shareiko.orgtool.data.config.PropertiesConfiguration;
 import by.shareiko.orgtool.model.CompaniesRoot;
 import by.shareiko.orgtool.model.Company;
@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 
 public class Main {
     public static void main(String[] args) {
-        DataAccessConfig config = new PropertiesConfiguration("src/main/resources/configuration.properties");
+        ApplicationConfig config = new PropertiesConfiguration("src/main/resources/configuration.properties");
         DataAccessor<CompaniesRoot> rootDataAccessor = XmlDataAccessor.forType(CompaniesRoot.class, config);
 
         // Необходимо выполнить десериализацию файла, вывести в консоль только открытые организации.
