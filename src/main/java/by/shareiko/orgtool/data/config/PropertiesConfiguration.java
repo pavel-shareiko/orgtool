@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.Properties;
 
-public class PropertiesConfiguration implements DataAccessConfig {
+public class PropertiesConfiguration implements ApplicationConfig {
     private final Properties properties;
 
     public PropertiesConfiguration(String filePath) {

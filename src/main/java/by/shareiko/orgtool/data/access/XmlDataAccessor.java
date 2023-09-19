@@ -1,6 +1,6 @@
 package by.shareiko.orgtool.data.access;
 
-import by.shareiko.orgtool.data.config.DataAccessConfig;
+import by.shareiko.orgtool.data.config.ApplicationConfig;
 import by.shareiko.orgtool.data.exception.DataAccessException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,25 +15,25 @@ public class XmlDataAccessor<T> implements DataAccessor<T> {
     public static final String ALLOW_FILE_OVERWRITES = "data.allow-file-overwrites";
     private static final Logger LOG = LoggerFactory.getLogger(XmlDataAccessor.class);
     private final Class<T> entityType;
-    private final DataAccessConfig dataAccessConfig;
+    private final ApplicationConfig applicationConfig;
 
-    private XmlDataAccessor(Class<T> entityType, DataAccessConfig dataAccessConfig) {
+    private XmlDataAccessor(Class<T> entityType, ApplicationConfig applicationConfig) {
         this.entityType = entityType;
-        this.dataAccessConfig = dataAccessConfig;
+        this.applicationConfig = applicationConfig;
     }
 
     public static <T> XmlDataAccessor<T> forType(Class<T> entityType) {
-        return new XmlDataAccessor<>(entityType, new NullDataAccessConfig());
+        return new XmlDataAccessor<>(entityType, new NullApplicationConfig());
     }
 
-    public static <T> XmlDataAccessor<T> forType(Class<T> entityType, DataAccessConfig dataAccessConfig) {
-        return new XmlDataAccessor<>(entityType, dataAccessConfig);
+    public static <T> XmlDataAccessor<T> forType(Class<T> entityType, ApplicationConfig applicationConfig) {
+        return new XmlDataAccessor<>(entityType, applicationConfig);
     }
 
     @Override
     public void save(T object, String outputPath) {
         if (LOG.isDebugEnabled()) {
-            LOG.debug("Serializing object to XML file '{}': {}", object, outputPath);
+            LOG.debug("Serializing object to XML file '{}': {}", outputPath, object);
         }
 
         try {
@@ -78,12 +78,12 @@ public class XmlDataAccessor<T> implements DataAccessor<T> {
 
     private Marshaller configureMarshaller(Marshaller marshaller) throws PropertyException {
         // apply marshaller configuration from data access config
-        Optional<String> fileEncoding = dataAccessConfig.getString(FILE_ENCODING);
+        Optional<String> fileEncoding = applicationConfig.getString(FILE_ENCODING);
         if (fileEncoding.isPresent()) {
             marshaller.setProperty(Marshaller.JAXB_ENCODING, fileEncoding.get());
         }
 
-        Optional<Boolean> formatOutput = dataAccessConfig.getBoolean(FORMAT_OUTPUT);
+        Optional<Boolean> formatOutput = applicationConfig.getBoolean(FORMAT_OUTPUT);
         if (formatOutput.isPresent()) {
             marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, formatOutput.get());
         }
@@ -95,7 +95,7 @@ public class XmlDataAccessor<T> implements DataAccessor<T> {
 
         // if the output file already exists, we need to validate whether we allowed to overwrite it
         if (outputFile.exists()) {
-            Optional<Boolean> allowFileOverwrites = dataAccessConfig.getBoolean(ALLOW_FILE_OVERWRITES);
+            Optional<Boolean> allowFileOverwrites = applicationConfig.getBoolean(ALLOW_FILE_OVERWRITES);
 
             if (!allowFileOverwrites.isPresent() || !allowFileOverwrites.get()) {
                 throw new DataAccessException("Unable to save data to file, because it is already exists." +
@@ -118,7 +118,7 @@ public class XmlDataAccessor<T> implements DataAccessor<T> {
         return (T) unmarshaller.unmarshal(contentFile);
     }
 
-    private static class NullDataAccessConfig implements DataAccessConfig {
+    private static class NullApplicationConfig implements ApplicationConfig {
         @Override
         public Optional<Boolean> getBoolean(String key) {
             return Optional.empty();
