@@ -21,7 +21,7 @@ public class Company {
     @XmlElement
     private CompanyStatus status;
 
-    @XmlElement(name="employee")
+    @XmlElement(name="employee-ref")
     @XmlIDREF
     private List<Employee> employees = new ArrayList<>();
 }

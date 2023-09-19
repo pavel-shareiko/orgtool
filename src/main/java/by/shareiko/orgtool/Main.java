@@ -22,29 +22,18 @@ public class Main {
         // Необходимо выполнить десериализацию файла, вывести в консоль только открытые организации.
 
         /* ========= Read information about open companies from file ========= */
-        CompaniesRoot root = rootDataAccessor.read("src/main/resources/input/input.xml");
-        List<Company> openCompanies = root.getCompanies().stream()
-                .filter(company -> company.getStatus() == CompanyStatus.OPEN)
-                .collect(Collectors.toList());
-        openCompanies.forEach(System.out::println);
+        List<Company> openCompanies = readAndPrintAllOpenCompanies(rootDataAccessor);
 
         // Необходимо выполнить сериализацию в xml массива организаций с перечислением её участников.
 
         /* ========= Save open companies to file ========= */
-        CompaniesRoot openCompaniesRoot = new CompaniesRoot();
+        saveOpenCompaniesToFile(openCompanies, rootDataAccessor);
 
-        // Collect company's employees
-        List<Employee> employees = openCompanies.stream()
-                .flatMap(company -> company.getEmployees().stream())
-                .distinct()
-                .collect(Collectors.toList());
+        /* ========= Save generated companies to file ========= */
+        generateAndSaveCustomCompanies(rootDataAccessor);
+    }
 
-        openCompaniesRoot.setCompanies(openCompanies);
-        openCompaniesRoot.setEmployees(employees);
-
-        rootDataAccessor.save(openCompaniesRoot, "open-companies.xml");
-
-        /* ========= Save custom companies to file ========= */
+    private static void generateAndSaveCustomCompanies(DataAccessor<CompaniesRoot> rootDataAccessor) {
         CompaniesRoot customCompaniesRoot = new CompaniesRoot();
 
         // Create custom companies
@@ -63,6 +52,30 @@ public class Main {
         customCompaniesRoot.setCompanies(customCompanies);
 
         rootDataAccessor.save(customCompaniesRoot, "custom-companies.xml");
+    }
+
+    private static void saveOpenCompaniesToFile(List<Company> openCompanies, DataAccessor<CompaniesRoot> rootDataAccessor) {
+        CompaniesRoot openCompaniesRoot = new CompaniesRoot();
+
+        // Collect company's employees
+        List<Employee> employees = openCompanies.stream()
+                .flatMap(company -> company.getEmployees().stream())
+                .distinct()
+                .collect(Collectors.toList());
+
+        openCompaniesRoot.setCompanies(openCompanies);
+        openCompaniesRoot.setEmployees(employees);
+
+        rootDataAccessor.save(openCompaniesRoot, "open-companies.xml");
+    }
+
+    private static List<Company> readAndPrintAllOpenCompanies(DataAccessor<CompaniesRoot> rootDataAccessor) {
+        CompaniesRoot root = rootDataAccessor.read("src/main/resources/input/input.xml");
+        List<Company> openCompanies = root.getCompanies().stream()
+                .filter(company -> company.getStatus() == CompanyStatus.OPEN)
+                .collect(Collectors.toList());
+        openCompanies.forEach(System.out::println);
+        return openCompanies;
     }
 
     private static List<Company> generateCompanies(int count) {
