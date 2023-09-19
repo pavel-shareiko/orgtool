@@ -4,66 +4,97 @@ import by.shareiko.orgtool.data.access.DataAccessor;
 import by.shareiko.orgtool.data.access.XmlDataAccessor;
 import by.shareiko.orgtool.data.config.DataAccessConfig;
 import by.shareiko.orgtool.data.config.PropertiesConfiguration;
-import by.shareiko.orgtool.model.*;
+import by.shareiko.orgtool.model.CompaniesRoot;
+import by.shareiko.orgtool.model.Company;
+import by.shareiko.orgtool.model.CompanyStatus;
+import by.shareiko.orgtool.model.Employee;
 
-import java.sql.Date;
-import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class Main {
     public static void main(String[] args) {
         DataAccessConfig config = new PropertiesConfiguration("src/main/resources/configuration.properties");
-        DataAccessor<Companies> dataAccessor = XmlDataAccessor.forType(Companies.class, config);
+        DataAccessor<CompaniesRoot> rootDataAccessor = XmlDataAccessor.forType(CompaniesRoot.class, config);
 
         // Необходимо выполнить десериализацию файла, вывести в консоль только открытые организации.
-        Companies result = dataAccessor.read("input.xml");
-        result.stream()
+
+        /* ========= Read information about open companies from file ========= */
+        CompaniesRoot root = rootDataAccessor.read("src/main/resources/input/input.xml");
+        List<Company> openCompanies = root.getCompanies().stream()
                 .filter(company -> company.getStatus() == CompanyStatus.OPEN)
-                .forEach(System.out::println);
+                .collect(Collectors.toList());
+        openCompanies.forEach(System.out::println);
 
         // Необходимо выполнить сериализацию в xml массива организаций с перечислением её участников.
-        Companies companies = generateCompanies();
-        dataAccessor.save(companies, "output.xml");
+
+        /* ========= Save open companies to file ========= */
+        CompaniesRoot openCompaniesRoot = new CompaniesRoot();
+
+        // Collect company's employees
+        List<Employee> employees = openCompanies.stream()
+                .flatMap(company -> company.getEmployees().stream())
+                .distinct()
+                .collect(Collectors.toList());
+
+        openCompaniesRoot.setCompanies(openCompanies);
+        openCompaniesRoot.setEmployees(employees);
+
+        rootDataAccessor.save(openCompaniesRoot, "open-companies.xml");
+
+        /* ========= Save custom companies to file ========= */
+        CompaniesRoot customCompaniesRoot = new CompaniesRoot();
+
+        // Create custom companies
+        int companiesCount = (int) (Math.random() * 10);
+        List<Company> customCompanies = generateCompanies(companiesCount);
+
+        // create a list of employees for each company
+        List<Employee> customEmployees = new ArrayList<>();
+        for (Company company : customCompanies) {
+            int employeesCount = (int) (Math.random() * 10);
+            List<Employee> companyEmployees = generateEmployees(employeesCount);
+            customEmployees.addAll(companyEmployees);
+            company.setEmployees(companyEmployees);
+        }
+        customCompaniesRoot.setEmployees(customEmployees);
+        customCompaniesRoot.setCompanies(customCompanies);
+
+        rootDataAccessor.save(customCompaniesRoot, "custom-companies.xml");
     }
 
-    private static Companies generateCompanies() {
-        Companies companies = new Companies();
+    private static List<Company> generateCompanies(int count) {
+        List<Company> companies = new ArrayList<>();
+        for (int i = 0; i < count; ++i) {
+            Company company = new Company();
+            company.setName("Company " + i);
+            company.setCreationDate(new Date());
+            company.setStatus(CompanyStatus.OPEN);
 
-        for (int i = 0; i < 10; ++i) {
-            Company company = generateCompany(i);
             companies.add(company);
         }
 
         return companies;
     }
 
-    private static Company generateCompany(int id) {
-        Company company = new Company();
-        company.setStatus(Math.random() > 0.6 ? CompanyStatus.OPEN : CompanyStatus.CLOSED);
-        company.setName("Company " + id);
-        company.setCreationDate(Date.from(Instant.now()));
+    // static variable for tracking last generated employee id, used for unique id generation
+    private static long lastEmployeeId = 0;
 
-        int employeesCount = (int) (Math.random() * 10);
-        Employees employees = generateEmployees(employeesCount);
+    private static List<Employee> generateEmployees(int count) {
+        List<Employee> employees = new ArrayList<>();
+        for (int i = 0; i < count; ++i) {
+            Employee employee = new Employee();
+            employee.setId(String.valueOf(lastEmployeeId++));
+            employee.setFirstName("First name " + i);
+            employee.setMiddleName("Middle name " + i);
+            employee.setLastName("Last name " + i);
+            employee.setBirthDate(new Date());
 
-        company.setEmployees(employees);
-        return company;
-    }
-
-    private static Employees generateEmployees(int employeesCount) {
-        Employees employees = new Employees();
-        for (int i = 0; i < employeesCount; ++i) {
-            Employee employee = generateEmployee(i);
             employees.add(employee);
         }
-        return employees;
-    }
 
-    private static Employee generateEmployee(int j) {
-        Employee employee = new Employee();
-        employee.setFirstName("FirstName " + j);
-        employee.setMiddleName("MiddleName " + j);
-        employee.setLastName("LastName " + j);
-        employee.setBirthDate(Date.from(Instant.now()));
-        return employee;
+        return employees;
     }
 }

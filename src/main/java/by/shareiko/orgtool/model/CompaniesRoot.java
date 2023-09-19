@@ -8,7 +8,7 @@ import java.util.List;
 @Data
 @XmlRootElement(name = "root")
 @XmlAccessorType(XmlAccessType.FIELD)
-public class Root {
+public class CompaniesRoot {
     @XmlElement(name="company")
     private List<Company> companies;
 
