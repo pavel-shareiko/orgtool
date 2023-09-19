@@ -3,12 +3,18 @@ package by.shareiko.orgtool.model;
 import lombok.Data;
 
 import javax.xml.bind.annotation.*;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 @Data
-@XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
 public class Employee {
+
+    @XmlAttribute
+    @XmlID
+    private String id;
+
     @XmlElement
     private String firstName;
 
