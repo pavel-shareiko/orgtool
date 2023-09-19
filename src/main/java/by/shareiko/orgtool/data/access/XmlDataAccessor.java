@@ -10,22 +10,20 @@ import java.io.File;
 import java.util.Optional;
 
 public class XmlDataAccessor<T> implements DataAccessor<T> {
-    private static final Logger LOG = LoggerFactory.getLogger(XmlDataAccessor.class);
     public static final String FILE_ENCODING = "data.encoding";
     public static final String FORMAT_OUTPUT = "data.format-output";
     public static final String ALLOW_FILE_OVERWRITES = "data.allow-file-overwrites";
+    private static final Logger LOG = LoggerFactory.getLogger(XmlDataAccessor.class);
     private final Class<T> entityType;
     private final DataAccessConfig dataAccessConfig;
 
     private XmlDataAccessor(Class<T> entityType, DataAccessConfig dataAccessConfig) {
         this.entityType = entityType;
-        this.dataAccessConfig = dataAccessConfig == null
-                ? new NullDataAccessConfig()
-                : dataAccessConfig;
+        this.dataAccessConfig = dataAccessConfig;
     }
 
     public static <T> XmlDataAccessor<T> forType(Class<T> entityType) {
-        return new XmlDataAccessor<>(entityType, null);
+        return new XmlDataAccessor<>(entityType, new NullDataAccessConfig());
     }
 
     public static <T> XmlDataAccessor<T> forType(Class<T> entityType, DataAccessConfig dataAccessConfig) {
@@ -79,6 +77,7 @@ public class XmlDataAccessor<T> implements DataAccessor<T> {
     }
 
     private Marshaller configureMarshaller(Marshaller marshaller) throws PropertyException {
+        // apply marshaller configuration from data access config
         Optional<String> fileEncoding = dataAccessConfig.getString(FILE_ENCODING);
         if (fileEncoding.isPresent()) {
             marshaller.setProperty(Marshaller.JAXB_ENCODING, fileEncoding.get());
@@ -93,14 +92,18 @@ public class XmlDataAccessor<T> implements DataAccessor<T> {
 
     private void doSave(Object object, String outputPath, Marshaller marshaller) throws JAXBException {
         File outputFile = new File(outputPath);
+
+        // if the output file already exists, we need to validate whether we allowed to overwrite it
         if (outputFile.exists()) {
             Optional<Boolean> allowFileOverwrites = dataAccessConfig.getBoolean(ALLOW_FILE_OVERWRITES);
+
             if (!allowFileOverwrites.isPresent() || !allowFileOverwrites.get()) {
                 throw new DataAccessException("Unable to save data to file, because it is already exists." +
                         "If you want to replace the existing file, " +
                         "specify the " + ALLOW_FILE_OVERWRITES + " property in the configuration");
             }
         }
+
         marshaller.marshal(object, outputFile);
     }
 
