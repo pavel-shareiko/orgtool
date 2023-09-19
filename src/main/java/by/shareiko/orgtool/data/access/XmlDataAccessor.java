@@ -33,7 +33,7 @@ public class XmlDataAccessor<T> implements DataAccessor<T> {
     @Override
     public void save(T object, String outputPath) {
         if (LOG.isDebugEnabled()) {
-            LOG.debug("Serializing object to XML file '{}': {}", object, outputPath);
+            LOG.debug("Serializing object to XML file '{}': {}", outputPath, object);
         }
 
         try {

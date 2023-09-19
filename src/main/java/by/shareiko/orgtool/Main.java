@@ -8,6 +8,8 @@ import by.shareiko.orgtool.model.CompaniesRoot;
 import by.shareiko.orgtool.model.Company;
 import by.shareiko.orgtool.model.CompanyStatus;
 import by.shareiko.orgtool.model.Employee;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -15,25 +17,59 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class Main {
+    public static final String DEFAULT_APPLICATION_CONFIGURATION_PATH = "src/main/resources/application.properties";
+    public static final String DEFAULT_CUSTOM_COMPANIES_OUTPUT_PATH = "custom-companies.xml";
+    public static final String DEFAULT_OPEN_COMPANIES_OUTPUT_PATH = "open-companies.xml";
+    public static final String DEFAULT_INPUT_PATH = "src/main/resources/input/input.xml";
+    private static final Logger LOG = LoggerFactory.getLogger(Main.class);
+
     public static void main(String[] args) {
-        ApplicationConfig config = new PropertiesConfiguration("src/main/resources/configuration.properties");
+        LOG.info("Application started with CLI args: {}", (Object) args);
+
+        ApplicationConfig config = new PropertiesConfiguration(DEFAULT_APPLICATION_CONFIGURATION_PATH);
         DataAccessor<CompaniesRoot> rootDataAccessor = XmlDataAccessor.forType(CompaniesRoot.class, config);
 
         // Необходимо выполнить десериализацию файла, вывести в консоль только открытые организации.
 
         /* ========= Read information about open companies from file ========= */
-        List<Company> openCompanies = readAndPrintAllOpenCompanies(rootDataAccessor);
+        List<Company> openCompanies = readAndPrintAllOpenCompanies(rootDataAccessor, config);
 
         // Необходимо выполнить сериализацию в xml массива организаций с перечислением её участников.
 
         /* ========= Save open companies to file ========= */
-        saveOpenCompaniesToFile(openCompanies, rootDataAccessor);
+        saveOpenCompaniesToFile(openCompanies, rootDataAccessor, config);
 
         /* ========= Save generated companies to file ========= */
-        generateAndSaveCustomCompanies(rootDataAccessor);
+        generateAndSaveCustomCompanies(rootDataAccessor, config);
     }
 
-    private static void generateAndSaveCustomCompanies(DataAccessor<CompaniesRoot> rootDataAccessor) {
+    private static List<Company> readAndPrintAllOpenCompanies(DataAccessor<CompaniesRoot> rootDataAccessor, ApplicationConfig config) {
+        String inputPath = config.getString("input.path").orElse(DEFAULT_INPUT_PATH);
+        CompaniesRoot root = rootDataAccessor.read(inputPath);
+        List<Company> openCompanies = root.getCompanies().stream()
+                .filter(company -> company.getStatus() == CompanyStatus.OPEN)
+                .collect(Collectors.toList());
+        openCompanies.forEach(System.out::println);
+        return openCompanies;
+    }
+
+    private static void saveOpenCompaniesToFile(List<Company> openCompanies, DataAccessor<CompaniesRoot> rootDataAccessor, ApplicationConfig config) {
+        CompaniesRoot openCompaniesRoot = new CompaniesRoot();
+
+        // Collect company's employees
+        List<Employee> employees = openCompanies.stream()
+                .flatMap(company -> company.getEmployees().stream())
+                .distinct()
+                .collect(Collectors.toList());
+
+        openCompaniesRoot.setCompanies(openCompanies);
+        openCompaniesRoot.setEmployees(employees);
+
+        String outputPath = config.getString("output.open-companies-path").orElse(DEFAULT_OPEN_COMPANIES_OUTPUT_PATH);
+        rootDataAccessor.save(openCompaniesRoot, outputPath);
+    }
+
+    private static void generateAndSaveCustomCompanies(DataAccessor<CompaniesRoot> rootDataAccessor, ApplicationConfig config) {
         CompaniesRoot customCompaniesRoot = new CompaniesRoot();
 
         // Create custom companies
@@ -51,31 +87,8 @@ public class Main {
         customCompaniesRoot.setEmployees(customEmployees);
         customCompaniesRoot.setCompanies(customCompanies);
 
-        rootDataAccessor.save(customCompaniesRoot, "custom-companies.xml");
-    }
-
-    private static void saveOpenCompaniesToFile(List<Company> openCompanies, DataAccessor<CompaniesRoot> rootDataAccessor) {
-        CompaniesRoot openCompaniesRoot = new CompaniesRoot();
-
-        // Collect company's employees
-        List<Employee> employees = openCompanies.stream()
-                .flatMap(company -> company.getEmployees().stream())
-                .distinct()
-                .collect(Collectors.toList());
-
-        openCompaniesRoot.setCompanies(openCompanies);
-        openCompaniesRoot.setEmployees(employees);
-
-        rootDataAccessor.save(openCompaniesRoot, "open-companies.xml");
-    }
-
-    private static List<Company> readAndPrintAllOpenCompanies(DataAccessor<CompaniesRoot> rootDataAccessor) {
-        CompaniesRoot root = rootDataAccessor.read("src/main/resources/input/input.xml");
-        List<Company> openCompanies = root.getCompanies().stream()
-                .filter(company -> company.getStatus() == CompanyStatus.OPEN)
-                .collect(Collectors.toList());
-        openCompanies.forEach(System.out::println);
-        return openCompanies;
+        String outputPath = config.getString("output.custom-companies-path").orElse(DEFAULT_CUSTOM_COMPANIES_OUTPUT_PATH);
+        rootDataAccessor.save(customCompaniesRoot, outputPath);
     }
 
     private static List<Company> generateCompanies(int count) {
